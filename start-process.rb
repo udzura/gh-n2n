@@ -12,8 +12,15 @@ $ghe_client    = Octokit::Client.new(access_token: ENV['GHE_ACCESS_TOKEN'], api_
 $interval = (ENV['INTERVAL'] || 60).to_i
 
 loop do
-  notifications = $github_client.notifications(all: true) + $ghe_client.notifications(all: true)
-  notifications = notifications.select {|i| %w(mention team_mention).include? i.reason }
+  begin
+    notifications = $github_client.notifications(all: true) + $ghe_client.notifications(all: true)
+    notifications = notifications.select {|i| %w(mention team_mention).include? i.reason }
+  rescue
+    puts "Connection faild! retry..."
+    sleep $interval
+    next
+  end
+
   checked = Time.now
   last_notification = notifications.first
   if !@last_update or @last_update < last_notification.updated_at.localtime
