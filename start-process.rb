@@ -9,6 +9,7 @@ Dotenv.configure(
 
 $github_client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
 $ghe_client    = Octokit::Client.new(access_token: ENV['GHE_ACCESS_TOKEN'], api_endpoint: ENV['GHE_API_ENDPOINT'])
+$interval = (ENV['INTERVAL'] || 60).to_i
 
 loop do
   notifications = $github_client.notifications(all: true) + $ghe_client.notifications(all: true)
@@ -37,5 +38,5 @@ loop do
     @last_update = checked
   end
   puts Time.now
-  sleep 60
+  sleep $interval
 end
