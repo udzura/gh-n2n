@@ -28,6 +28,10 @@ loop do
       puts "URL: %s" % entry.html_url
       puts "Created at: %s" % entry.created_at.localtime
       puts entry.body.lines.map{|l| l.sub(/\A/, "\t") }.join
+      system %Q(terminal-notifier \
+          -title 'Notification from GH(:E)' \
+          -message '#{entry.body.split(//)[0..63].join}...\n#{entry.html_url}' \
+          -open '#{target_pr.html_url}')
       puts "-" * 120
     end
     @last_update = checked
