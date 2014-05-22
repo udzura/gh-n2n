@@ -2,15 +2,17 @@ require 'bundler'
 Bundler.require
 
 Dotenv.configure(
-  'GITHUB_ACCESS_TOKEN' => 'visit https://github.com/settings/tokens/new'
+  'GITHUB_ACCESS_TOKEN' => 'visit https://github.com/settings/tokens/new',
+  'GHE_ACCESS_TOKEN'    => 'visit GHE-HOST/settings/tokens/new',
+  'GHE_API_ENDPOINT'    => 'fill in your GHE endpoint',
 )
 
-Octokit.configure do |c|
-  c.access_token = ENV['GITHUB_ACCESS_TOKEN']
-end
+$github_client = Octokit::Client.new(access_token: ENV['GITHUB_ACCESS_TOKEN'])
+$ghe_client    = Octokit::Client.new(access_token: ENV['GHE_ACCESS_TOKEN'], api_endpoint: ENV['GHE_API_ENDPOINT'])
 
 loop do
-  notifications = Octokit.notifications(all: true).select {|i| %w(mention team_mention).include? i.reason }
+  notifications = $github_client.notifications(all: true) + $ghe_client.notifications(all: true)
+  notifications = notifications.select {|i| %w(mention team_mention).include? i.reason }
   checked = Time.now
   last_notification = notifications.first
   if !@last_update or @last_update < last_notification.updated_at.localtime
