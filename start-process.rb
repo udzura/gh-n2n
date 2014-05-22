@@ -10,25 +10,25 @@ Octokit.configure do |c|
 end
 
 loop do
-  notifications = Octokit.notifications(all: true, participating: true).select {|i| %w(mention).include? i.reason }
+  notifications = Octokit.notifications(all: true).select {|i| %w(mention team_mention).include? i.reason }
+  checked = Time.now
   last_notification = notifications.first
-  if !@last_update or @last_update < last_notification.updated_at
+  if !@last_update or @last_update < last_notification.updated_at.localtime
     notifications.reverse_each do |notification|
+      next if @last_update && notification.updated_at < @last_update
       target_pr = notification.subject.rels[:self].get.data
       comments = target_pr.rels[:comments].get.data
-      url = nil
-      if comments.empty?
-        puts target_pr.body.lines.map{|l| l.sub(/\A/, "\t") }.join
-        url = target_pr.html_url
-      else
-        comment = comments.last
-        puts comment.body.lines.map{|l| l.sub(/\A/, "\t") }.join
-        url = comment.html_url
-      end
-      puts "URL: %s" % url
+      entry = if comments.empty?
+                target_pr
+              else
+                comments.last
+              end
+      puts "URL: %s" % entry.html_url
+      puts "Created at: %s" % entry.created_at.localtime
+      puts entry.body.lines.map{|l| l.sub(/\A/, "\t") }.join
       puts "-" * 120
     end
-    @last_update = last_notification.updated_at
+    @last_update = checked
   end
   puts Time.now
   sleep 60
